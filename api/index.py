@@ -22,6 +22,10 @@ class TextRequest(BaseModel):
     voice: str = "en-US-AriaNeural"
     rate: str = "-25%"
 
+class ChatRequest(BaseModel):
+    text: str
+    system_prompt: str = "You are Sofia, a friendly English tutor."
+
 @app.post("/api/tts")
 async def generate_tts(request: TextRequest):
     try:
@@ -35,7 +39,7 @@ async def generate_tts(request: TextRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/chat")
-async def chat_with_deepseek(request: TextRequest):
+async def chat_with_deepseek(request: ChatRequest):
     api_key = os.environ.get("DEEPSEEK_API_KEY")
     if not api_key:
         return {"response": "Error: API Key no configurada en Vercel."}
@@ -47,7 +51,7 @@ async def chat_with_deepseek(request: TextRequest):
     payload = {
         "model": "deepseek-chat",
         "messages": [
-            {"role": "system", "content": "You are Sofia, a friendly and patient English tutor for absolute beginners (A1 level, Spanish speakers). Your goal is to guide them step-by-step. RULES: 1. Speak 70% to 80% in English using simple words. 2. Use 20% to 30% Spanish ONLY to guide, explain a difficult word, or give a brief instruction, putting the Spanish in parentheses at the end of the sentence. Example: 'That is great! Now, try to say: I am happy (Ahora intenta decir: estoy feliz).' 3. Do NOT translate the whole sentence, only guide them. 4. Keep responses very short (max 2 sentences). 5. Always end with a simple follow-up question to keep them talking."},
+            {"role": "system", "content": request.system_prompt},
             {"role": "user", "content": request.text}
         ],
         "temperature": 0.7
